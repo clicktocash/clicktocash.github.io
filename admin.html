@@ -369,7 +369,7 @@
 
         <div id="referralBonusTab" class="tab-content">
             <div class="card">
-                <div class="card-title">রেফারেল বোনাস ও প্ল্যান ক্রয়ের অনুরোধ তালিকা</div>
+                <div class="card-title">পেন্ডিং রেফারেল বোনাস অনুরোধ তালিকা</div>
                 <table>
                     <thead>
                         <tr>
@@ -494,7 +494,7 @@
                 </table>
             </div>
 
-            <div class="card">
+            <div class="card" style="margin-bottom: 25px;">
                 <div class="card-title">উইথড্র ইতিহাস (পেইড / প্রত্যাখ্যাত)</div>
                 <table>
                     <thead>
@@ -509,6 +509,25 @@
                     </thead>
                     <tbody id="withdrawHistoryBody">
                         <tr><td colspan="6" style="text-align: center; color: #94a3b8;">উইথড্র ইতিহাস খালি আছে</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <div class="card-title">রেফারেল বোনাস ইতিহাস (অনুমোদিত / প্রত্যাখ্যাত)</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>তারিখ</th>
+                            <th>ক্রেতার ইমেইল</th>
+                            <th>ক্রয়কৃত প্ল্যান</th>
+                            <th>রেফারকারী</th>
+                            <th>বোনাস পরিমাণ</th>
+                            <th>স্ট্যাটাস</th>
+                        </tr>
+                    </thead>
+                    <tbody id="referralHistoryBody">
+                        <tr><td colspan="6" style="text-align: center; color: #94a3b8;">রেফারেল ইতিহাস খালি আছে</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -551,6 +570,7 @@
         const usersTableBody = document.getElementById('usersTableBody');
         const depositHistoryBody = document.getElementById('depositHistoryBody');
         const withdrawHistoryBody = document.getElementById('withdrawHistoryBody');
+        const referralHistoryBody = document.getElementById('referralHistoryBody');
         const bkashTableBody = document.getElementById('bkashTableBody');
         const nogodTableBody = document.getElementById('nogodTableBody');
         const adminEmailDisplay = document.getElementById('adminEmailDisplay');
@@ -717,12 +737,11 @@
         function loadReferralBonuses() {
             onSnapshot(collection(db, "referral_requests"), (snapshot) => {
                 referralBonusTableBody.innerHTML = "";
-                if (snapshot.empty) {
-                    referralBonusTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #94a3b8;">কোনো রেফারেল বোনাস অনুরোধ নেই।</td></tr>`;
-                    return;
-                }
+                referralHistoryBody.innerHTML = "";
 
-                let count = 0;
+                let pendingCount = 0;
+                let historyCount = 0;
+
                 snapshot.forEach((docSnap) => {
                     const data = docSnap.data();
                     const reqId = docSnap.id;
@@ -733,36 +752,43 @@
                     const referrerUsername = data.referrerUsername || "N/A";
                     const bonusAmount = data.bonusAmount || 0;
 
-                    let statusBadge = `<span class="badge-pending">Pending</span>`;
-                    let actionBtns = `
-                        <button class="btn-approve" onclick="approveReferralBonus('${reqId}', '${data.referrerUsername}', ${bonusAmount})">অনুমোদন</button>
-                        <button class="btn-reject" onclick="rejectReferralBonus('${reqId}')">বাতিল</button>
-                    `;
-
-                    if (status === "Approved") {
-                        statusBadge = `<span class="badge-approved">Approved</span>`;
-                        actionBtns = `<span style="color: #10b981; font-weight: 600;">সম্পন্ন</span>`;
-                    } else if (status === "Rejected") {
-                        statusBadge = `<span class="badge-rejected">Rejected</span>`;
-                        actionBtns = `<span style="color: #ef4444; font-weight: 600;">বাতিলকৃত</span>`;
+                    if (status === "Pending") {
+                        pendingCount++;
+                        referralBonusTableBody.innerHTML += `
+                            <tr>
+                                <td>${dateStr}</td>
+                                <td>${buyerEmail}</td>
+                                <td><b>${planName}</b></td>
+                                <td><span style="color: #5eead4; font-weight: 600;">${referrerUsername}</span></td>
+                                <td>৳ ${bonusAmount}</td>
+                                <td><span class="badge-pending">Pending</span></td>
+                                <td>
+                                    <button class="btn-approve" onclick="approveReferralBonus('${reqId}', '${referrerUsername}', ${bonusAmount})">অনুমোদন</button>
+                                    <button class="btn-reject" onclick="rejectReferralBonus('${reqId}')">বাতিল</button>
+                                </td>
+                            </tr>
+                        `;
+                    } else {
+                        historyCount++;
+                        let statusBadge = status === "Approved" ? `<span class="badge-approved">Approved</span>` : `<span class="badge-rejected">Rejected</span>`;
+                        referralHistoryBody.innerHTML += `
+                            <tr>
+                                <td>${dateStr}</td>
+                                <td>${buyerEmail}</td>
+                                <td><b>${planName}</b></td>
+                                <td><span style="color: #5eead4; font-weight: 600;">${referrerUsername}</span></td>
+                                <td>৳ ${bonusAmount}</td>
+                                <td>${statusBadge}</td>
+                            </tr>
+                        `;
                     }
-
-                    count++;
-                    referralBonusTableBody.innerHTML += `
-                        <tr>
-                            <td>${dateStr}</td>
-                            <td>${buyerEmail}</td>
-                            <td><b>${planName}</b></td>
-                            <td><span style="color: #5eead4; font-weight: 600;">${referrerUsername}</span></td>
-                            <td>৳ ${bonusAmount}</td>
-                            <td>${statusBadge}</td>
-                            <td>${actionBtns}</td>
-                        </tr>
-                    `;
                 });
 
-                if (count === 0) {
-                    referralBonusTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #94a3b8;">কোনো রেফারেল বোনাস অনুরোধ পাওয়া যায়নি।</td></tr>`;
+                if (pendingCount === 0) {
+                    referralBonusTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #94a3b8;">কোনো পেন্ডিং রেফারেল বোনাস অনুরোধ নেই।</td></tr>`;
+                }
+                if (historyCount === 0) {
+                    referralHistoryBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #94a3b8;">রেফারেল ইতিহাস খালি আছে</td></tr>`;
                 }
             });
         }
