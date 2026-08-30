@@ -85,20 +85,8 @@
             margin-bottom: 25px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        @media (max-width: 768px) {
-            .tab-menu-box {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .tab-column {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
         }
 
         .tab-btn {
@@ -237,7 +225,7 @@
         }
         .btn-reject:hover { background: #dc2626; transform: translateY(-1px); }
 
-        .membership-select, .bonus-select {
+        .membership-select {
             background: #0f172a;
             color: #5eead4;
             border: 1px solid #334155;
@@ -249,7 +237,7 @@
             transition: border-color 0.3s;
             margin-top: 4px;
         }
-        .membership-select:hover, .bonus-select:hover { border-color: #5eead4; }
+        .membership-select:hover { border-color: #5eead4; }
 
         .btn-ban {
             background: #f59e0b;
@@ -323,16 +311,13 @@
 
         <!-- Tab Navigation Box -->
         <div class="tab-menu-box">
-            <div class="tab-column">
-                <button class="tab-btn active" onclick="switchTab('depositTab', this)">📥 ডিপোজিট অনুরোধসমূহ</button>
-                <button class="tab-btn" onclick="switchTab('withdrawTab', this)">📤 উইথড্র অনুরোধসমূহ</button>
-                <button class="tab-btn" onclick="switchTab('bkashTab', this)">📱 বিকাশ নম্বর ম্যানেজমেন্ট</button>
-            </div>
-            <div class="tab-column">
-                <button class="tab-btn" onclick="switchTab('nogodTab', this)">💰 নগদ নম্বর ম্যানেজমেন্ট</button>
-                <button class="tab-btn" onclick="switchTab('usersTab', this)">👥 ব্যবহারকারী তালিকা</button>
-                <button class="tab-btn" onclick="switchTab('historyTab', this)">📜 ইতিহাস (লগ)</button>
-            </div>
+            <button class="tab-btn active" onclick="switchTab('depositTab', this)">📥 ডিপোজিট অনুরোধসমূহ</button>
+            <button class="tab-btn" onclick="switchTab('withdrawTab', this)">📤 উইথড্র অনুরোধসমূহ</button>
+            <button class="tab-btn" onclick="switchTab('referralBonusTab', this)">🎁 রেফারেল বোনাস অনুরোধ</button>
+            <button class="tab-btn" onclick="switchTab('usersTab', this)">👥 ব্যবহারকারী তালিকা</button>
+            <button class="tab-btn" onclick="switchTab('bkashTab', this)">📱 বিকাশ নম্বর ম্যানেজমেন্ট</button>
+            <button class="tab-btn" onclick="switchTab('nogodTab', this)">💰 নগদ নম্বর ম্যানেজমেন্ট</button>
+            <button class="tab-btn" onclick="switchTab('historyTab', this)">📜 ইতিহাস (লগ)</button>
         </div>
 
         <!-- Tab 1: Pending Deposit Requests -->
@@ -385,7 +370,30 @@
             </div>
         </div>
 
-        <!-- Tab 3: Users Account Status -->
+        <!-- Tab 3: Referral Bonus Requests Tab -->
+        <div id="referralBonusTab" class="tab-content">
+            <div class="card">
+                <div class="card-title">রেফারেল বোনাস ও প্ল্যান ক্রয়ের অনুরোধ তালিকা</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>তারিখ</th>
+                            <th>ক্রেতার ইমেইল</th>
+                            <th>ক্রয়কৃত প্ল্যান</th>
+                            <th>রেফারকারী (Referrer)</th>
+                            <th>বোনাসের পরিমাণ</th>
+                            <th>স্ট্যাটাস</th>
+                            <th>অ্যাকশন</th>
+                        </tr>
+                    </thead>
+                    <tbody id="referralBonusTableBody">
+                        <tr><td colspan="7" style="text-align: center; color: #94a3b8;">লোড হচ্ছে...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab 4: Users Account Status -->
         <div id="usersTab" class="tab-content">
             <div class="card">
                 <div class="card-title">ব্যবহারকারী ব্যালেন্স, মেম্বারশিপ ও অ্যাকাউন্ট ম্যানেজমেন্ট</div>
@@ -396,19 +404,18 @@
                             <th>ইমেইল</th>
                             <th>ব্যালেন্স</th>
                             <th>মেম্বারশিপ ও মেয়াদ (৩ মাস)</th>
-                            <th>রেফার বোনাস ব্যালেন্স যোগ</th>
                             <th>অ্যাকাউন্ট স্ট্যাটাস</th>
                             <th>অ্যাকশন</th>
                         </tr>
                     </thead>
                     <tbody id="usersTableBody">
-                        <tr><td colspan="7" style="text-align: center; color: #94a3b8;">লোড হচ্ছে...</td></tr>
+                        <tr><td colspan="6" style="text-align: center; color: #94a3b8;">লোড হচ্ছে...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <!-- Tab 4: Bkash Numbers Management -->
+        <!-- Tab 5: Bkash Numbers Management -->
         <div id="bkashTab" class="tab-content">
             <div class="card">
                 <div class="card-title">বিকাশ মার্চেন্ট / পার্সোনাল নম্বর যোগ করুন</div>
@@ -440,7 +447,7 @@
             </div>
         </div>
 
-        <!-- Tab 5: Nogod Numbers Management -->
+        <!-- Tab 6: Nogod Numbers Management -->
         <div id="nogodTab" class="tab-content">
             <div class="card">
                 <div class="card-title">নগদ মার্চেন্ট / পার্সোনাল নম্বর যোগ করুন</div>
@@ -472,7 +479,7 @@
             </div>
         </div>
 
-        <!-- Tab 6: History (Completed/Rejected Requests) -->
+        <!-- Tab 7: History (Completed/Rejected Requests) -->
         <div id="historyTab" class="tab-content">
             <div class="card" style="margin-bottom: 25px;">
                 <div class="card-title">ডিপোজিট ইতিহাস (অনুমোদিত / প্রত্যাখ্যাত)</div>
@@ -525,7 +532,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, getDoc, addDoc, serverTimestamp, increment } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, deleteDoc, getDoc, addDoc, serverTimestamp, increment, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyByuYaP1fcGz0PJJ3r3QPWt0PNRSR9EUO0",
@@ -549,6 +556,7 @@
 
         const depositTableBody = document.getElementById('depositTableBody');
         const withdrawTableBody = document.getElementById('withdrawTableBody');
+        const referralBonusTableBody = document.getElementById('referralBonusTableBody');
         const usersTableBody = document.getElementById('usersTableBody');
         const depositHistoryBody = document.getElementById('depositHistoryBody');
         const withdrawHistoryBody = document.getElementById('withdrawHistoryBody');
@@ -575,6 +583,7 @@
                 adminEmailDisplay.innerText = `${user.email}`;
                 loadDeposits();
                 loadWithdraws();
+                loadReferralBonuses();
                 loadUsers();
                 loadPaymentNumbers('bkash');
                 loadPaymentNumbers('nogod');
@@ -714,11 +723,110 @@
             });
         }
 
+        // Load Referral Bonus Requests
+        function loadReferralBonuses() {
+            onSnapshot(collection(db, "referral_requests"), (snapshot) => {
+                referralBonusTableBody.innerHTML = "";
+                if (snapshot.empty) {
+                    referralBonusTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #94a3b8;">কোনো রেফারেল বোনাস অনুরোধ নেই।</td></tr>`;
+                    return;
+                }
+
+                let count = 0;
+                snapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const reqId = docSnap.id;
+                    const dateStr = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString('bn-BD') : "তারিখ";
+                    const status = data.status || "Pending";
+                    const buyerEmail = data.buyerEmail || "N/A";
+                    const planName = data.plan || "N/A";
+                    const referrerUsername = data.referrerUsername || "N/A";
+                    const bonusAmount = data.bonusAmount || 0;
+
+                    let statusBadge = `<span class="badge-pending">Pending</span>`;
+                    let actionBtns = `
+                        <button class="btn-approve" onclick="approveReferralBonus('${reqId}', '${data.referrerUsername}', ${bonusAmount})">অনুমোদন</button>
+                        <button class="btn-reject" onclick="rejectReferralBonus('${reqId}')">বাতিল</button>
+                    `;
+
+                    if (status === "Approved") {
+                        statusBadge = `<span class="badge-approved">Approved</span>`;
+                        actionBtns = `<span style="color: #10b981; font-weight: 600;">সম্পন্ন</span>`;
+                    } else if (status === "Rejected") {
+                        statusBadge = `<span class="badge-rejected">Rejected</span>`;
+                        actionBtns = `<span style="color: #ef4444; font-weight: 600;">বাতিলকৃত</span>`;
+                    }
+
+                    count++;
+                    referralBonusTableBody.innerHTML += `
+                        <tr>
+                            <td>${dateStr}</td>
+                            <td>${buyerEmail}</td>
+                            <td><b>${planName}</b></td>
+                            <td><span style="color: #5eead4; font-weight: 600;">${referrerUsername}</span></td>
+                            <td>৳ ${bonusAmount}</td>
+                            <td>${statusBadge}</td>
+                            <td>${actionBtns}</td>
+                        </tr>
+                    `;
+                });
+
+                if (count === 0) {
+                    referralBonusTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #94a3b8;">কোনো রেফারেল বোনাস অনুরোধ পাওয়া যায়নি।</td></tr>`;
+                }
+            });
+        }
+
+        window.approveReferralBonus = async function(reqId, referrerUsername, bonusAmount) {
+            if (!confirm(`আপনি কি এই রেফারেল বোনাস (৳ ${bonusAmount}) রেফারকারীকে প্রদান করতে চান?`)) return;
+            try {
+                const usersRef = collection(db, "users");
+                const q = query(usersRef, where("username", "==", referrerUsername));
+                const querySnapshot = await getDocs(q);
+
+                if (querySnapshot.empty) {
+                    alert("ত্রুটি: সিস্টেমে এই রেফারকারী ব্যবহারকারীকে খুঁজে পাওয়া যায়নি!");
+                    return;
+                }
+
+                let referrerUserId = "";
+                querySnapshot.forEach((d) => {
+                    referrerUserId = d.id;
+                });
+
+                const referrerRef = doc(db, "users", referrerUserId);
+                await updateDoc(referrerRef, {
+                    balance: increment(bonusAmount),
+                    referralBonus: increment(bonusAmount)
+                });
+
+                await updateDoc(doc(db, "referral_requests", reqId), {
+                    status: "Approved"
+                });
+
+                alert("রেফারেল বোনাস সফলভাবে অনুমোদন ও অ্যাকাউন্টে যোগ করা হয়েছে!");
+            } catch (error) {
+                alert("ত্রুটি: " + error.message);
+            }
+        };
+
+        window.rejectReferralBonus = async function(reqId) {
+            if (!confirm("আপনি কি এই রেফারেল বোনাসের অনুরোধটি বাতিল করতে চান?")) return;
+            try {
+                await updateDoc(doc(db, "referral_requests", reqId), {
+                    status: "Rejected"
+                });
+                alert("অনুরোধটি সফলভাবে বাতিল করা হয়েছে।");
+            } catch (error) {
+                alert("ত্রুটি: " + error.message);
+            }
+        };
+
         function loadUsers() {
             onSnapshot(collection(db, "users"), async (snapshot) => {
                 usersTableBody.innerHTML = "";
                 if (snapshot.empty) {
-                    usersTableBody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #94a3b8;">কোনো ব্যবহারকারী পাওয়া যায়নি</td></tr>`;
+                    usersTableBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: #94a3b8;">কোনো ব্যবহারকারী পাওয়া যায়নি</td></tr>`;
                     return;
                 }
 
@@ -733,7 +841,6 @@
                     let currentMembership = data.membership || "Free";
                     const accountStatus = data.status || "Active";
                     const expiryTimestamp = data.membershipExpiry;
-                    const referredBy = data.referredBy || data.referBy || data.referrer || "কেউ না";
 
                     if (currentMembership !== "Free" && expiryTimestamp) {
                         const expiryDate = expiryTimestamp.toDate();
@@ -775,26 +882,15 @@
                         ${expiryText}
                     `;
 
-                    const referBonusDropdown = `
-                        <select class="bonus-select" onchange="addReferBonus('${userId}', this.value, this)">
-                            <option value="" disabled selected>বোনাস সিলেক্ট করুন</option>
-                            <option value="45">Basic Refer (৳ ৪৫ - ৫%)</option>
-                            <option value="270">Premium Refer (৳ ২৭০ - ১৫%)</option>
-                            <option value="675">Pro Refer (৳ ৬৭৫ - ২৫%)</option>
-                        </select>
-                    `;
-
                     usersTableBody.innerHTML += `
                         <tr>
                             <td>
                                 <b>${name}</b><br>
-                                <small style="color:#64748b">ID: ${userId}</small><br>
-                                <small style="color:#5eead4;">Referred By: ${referredBy}</small>
+                                <small style="color:#64748b">ID: ${userId}</small>
                             </td>
                             <td>${email}</td>
                             <td>৳ ${balance.toFixed(2)}</td>
                             <td>${membershipDropdown}</td>
-                            <td>${referBonusDropdown}</td>
                             <td>${statusBadge}</td>
                             <td>${actionBtns}</td>
                         </tr>
@@ -895,29 +991,6 @@
             return date;
         }
 
-        window.addReferBonus = async function(userId, bonusAmountStr, selectElement) {
-            const bonusAmount = parseFloat(bonusAmountStr);
-            if (isNaN(bonusAmount)) return;
-
-            if (!confirm(`এই ব্যবহারকারীর অ্যাকাউন্টে ${bonusAmount} টাকা রেফার বোনাস যোগ করতে চান কি?`)) {
-                selectElement.value = "";
-                return;
-            }
-
-            try {
-                const userRef = doc(db, "users", userId);
-                await updateDoc(userRef, {
-                    balance: increment(bonusAmount),
-                    referralBonus: increment(bonusAmount)
-                });
-                alert(`সফলভাবে ${bonusAmount} টাকা মূল ব্যালেন্স ও রেফারেল বোনাস ফিল্ডে যোগ করা হয়েছে!`);
-                selectElement.value = "";
-            } catch (error) {
-                alert("ত্রুটি: " + error.message);
-                selectElement.value = "";
-            }
-        };
-
         window.updateDepositStatus = async function(depositId, userId, planName, newStatus) {
             if (!confirm(`নিশ্চিত করুন আপনি ${newStatus} করতে চান কি?`)) return;
             try {
@@ -985,4 +1058,4 @@
         });
     </script>
 </body>
-                                                             </html>
+</html>
