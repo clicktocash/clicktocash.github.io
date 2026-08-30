@@ -194,7 +194,6 @@
             </div>
         </div>
 
-        <!-- Link Box Section -->
         <div class="link-box-card">
             <div class="link-title">🔗 আপনার নিজস্ব রেফারেল লিংক (Your Referral Link)</div>
             <div class="input-group">
@@ -203,7 +202,6 @@
             </div>
         </div>
 
-        <!-- Referral Commission Chart Section -->
         <div class="link-box-card">
             <div class="link-title">📊 রেফারেল কমিশন চার্ট (Referral Commission Rates)</div>
             <div style="overflow-x: auto;">
@@ -236,7 +234,6 @@
             </div>
         </div>
 
-        <!-- Referral History Section (New) -->
         <div class="link-box-card">
             <div class="link-title">👥 আপনার রেফারেল তালিকা (Referral History)</div>
             <div style="overflow-x: auto;">
@@ -264,11 +261,10 @@
         &copy; ২০২৬ Click2Cash. All Rights Reserved.
     </footer>
 
-    <!-- Firebase & Dynamic Link Generation Script -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyByuYaP1fcGz0PJJ3r3QPWt0PNRSR9EUO0",
@@ -286,54 +282,73 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 const uid = user.uid;
-                
-                // ইউজারের নিজস্ব রেফারেল লিংক তৈরি (register.html?ref=UID)
-                const refLink = `${window.location.origin}/register.html?ref=${uid}`;
-                document.getElementById('referralLinkInput').value = refLink;
 
-                // ফায়ারস্টোর থেকে মূল ইউজারের ডাটা ফেচ করা
+                // ১. প্রথমে লগইন করা ইউজারের নিজের ডকুমেন্ট এনে ইউজারনেম ও আর্নিং বের করা
                 onSnapshot(doc(db, "users", uid), (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
+                        const username = data.username || data.userName || uid;
                         
-                        const refCount = data.totalReferrals || data.referralCount || 0;
-                        document.getElementById('totalReferCount').innerText = `${refCount} জন`;
-
+                        // রেফারেল লিংক তৈরি
+                        const refLink = `https://clicktocash.github.io/signup.html?ref=${username}`;
+                        document.getElementById('referralLinkInput').value = refLink;
+                        
+                        // ব্যালেন্স বা বোনাস প্রদর্শন
                         const refEarnings = data.referralBonus || data.referralEarnings || 0;
                         document.getElementById('referralEarningsDisplay').innerText = `৳ ${refEarnings.toFixed(2)}`;
+
+                        // ২. এখন 'users' কালেকশন থেকে কুয়েরি করব যাদের referredBy == username
+                        const usersRef = collection(db, "users");
+                        const q = query(usersRef, where("referredBy", "==", username));
+
+                        onSnapshot(q, (querySnapshot) => {
+                            const historyTableBody = document.getElementById('referralHistoryTableBody');
+                            
+                            // মোট রেফারেল সংখ্যা আপডেট
+                            document.getElementById('totalReferCount').innerText = `${querySnapshot.size} জন`;
+
+                            if (querySnapshot.empty) {
+                                historyTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #94a3b8;">এখনো কেউ আপনার লিংকে যুক্ত হয়নি।</td></tr>`;
+                                return;
+                            }
+
+                            let rowsHtml = "";
+                            querySnapshot.forEach((refDoc) => {
+                                const refData = refDoc.data();
+                                const name = refData.username || refData.name || refData.email || "অজানা ব্যবহারকারী";
+                                
+                                // ইউজারের কেনা প্ল্যান চেক (Free হলে Free Plan দেখাবে)
+                                const plan = refData.membership || refData.plan || "Free Plan";
+                                
+                                // প্ল্যান অনুযায়ী মূল্য ও কমিশন নির্ধারণ
+                                let planPrice = 0;
+                                let commission = 0;
+                                if (plan.toLowerCase().includes("basic")) {
+                                    planPrice = 900; // আনুমানিক বা আপনার নির্ধারিত মূল্য
+                                    commission = 45;
+                                } else if (plan.toLowerCase().includes("premium")) {
+                                    planPrice = 1800;
+                                    commission = 270;
+                                } else if (plan.toLowerCase().includes("pro")) {
+                                    planPrice = 900; // আপনার চার্ট অনুযায়ী Pro Plan এর কমিশন ৬৭৫ টাকা ধরলে
+                                    commission = 675;
+                                }
+
+                                const date = refData.createdAt || refData.joinedAt || "প্রযোজ্য নয়";
+
+                                rowsHtml += `
+                                    <tr>
+                                        <td><strong style="color: #ffffff;">${name}</strong></td>
+                                        <td><span style="color: #5eead4;">${plan}</span></td>
+                                        <td>৳ ${planPrice}</td>
+                                        <td><strong style="color: #10b981;">৳ ${commission}</strong></td>
+                                        <td style="color: #94a3b8;">${date}</td>
+                                    </tr>
+                                `;
+                            });
+                            historyTableBody.innerHTML = rowsHtml;
+                        });
                     }
-                });
-
-                // ফায়ারস্টোর থেকে রেফারেল হিস্ট্রি ফেচ করা (ধরে নেওয়া হচ্ছে ইউজারের সাব-কালেকশন বা ফিল্ড হিসেবে 'referrals' আছে)
-                const historyTableBody = document.getElementById('referralHistoryTableBody');
-                
-                // সাব-কালেকশন থেকে রিয়েল-টাইম ডেটা লোড করার কোড (users/{uid}/referrals)
-                onSnapshot(collection(db, "users", uid, "referrals"), (querySnapshot) => {
-                    if (querySnapshot.empty) {
-                        historyTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #94a3b8;">এখনো কেউ আপনার লিংকে যুক্ত হয়নি।</td></tr>`;
-                        return;
-                    }
-
-                    let rowsHtml = "";
-                    querySnapshot.forEach((doc) => {
-                        const refData = doc.data();
-                        const name = refData.name || refData.email || "অজানা ব্যবহারকারী";
-                        const plan = refData.planName || refData.plan || "Free Plan";
-                        const planPrice = refData.planPrice || refData.amount || 0;
-                        const commission = refData.commission || 0;
-                        const date = refData.date || refData.joinedAt || "প্রযোজ্য নয়";
-
-                        rowsHtml += `
-                            <tr>
-                                <td><strong style="color: #ffffff;">${name}</strong></td>
-                                <td><span style="color: #5eead4;">${plan}</span></td>
-                                <td>৳ ${planPrice}</td>
-                                <td><strong style="color: #10b981;">৳ ${commission}</strong></td>
-                                <td style="color: #94a3b8;">${date}</td>
-                            </tr>
-                        `;
-                    });
-                    historyTableBody.innerHTML = rowsHtml;
                 });
 
             } else {
@@ -342,7 +357,6 @@
         });
     </script>
 
-    <!-- Copy Link JavaScript Function -->
     <script>
         function copyReferralLink() {
             const linkInput = document.getElementById('referralLinkInput');
@@ -364,7 +378,6 @@
         }
     </script>
 
-    <!-- Header Load Script -->
     <script>
         fetch('header.html')
             .then(response => response.text())
