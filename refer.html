@@ -235,6 +235,29 @@
                 </table>
             </div>
         </div>
+
+        <!-- Referral History Section (New) -->
+        <div class="link-box-card">
+            <div class="link-title">👥 আপনার রেফারেল তালিকা (Referral History)</div>
+            <div style="overflow-x: auto;">
+                <table class="commission-table">
+                    <thead>
+                        <tr>
+                            <th>ব্যবহারকারীর নাম / ইমেইল</th>
+                            <th>ক্রয়কৃত প্ল্যান</th>
+                            <th>প্ল্যানের মূল্য</th>
+                            <th>আপনার কমিশন</th>
+                            <th>যোগদানের তারিখ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="referralHistoryTableBody">
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: #94a3b8;">কোনো রেফারেল পাওয়া যায়নি।</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </main>
 
     <footer>
@@ -245,7 +268,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyByuYaP1fcGz0PJJ3r3QPWt0PNRSR9EUO0",
@@ -268,7 +291,7 @@
                 const refLink = `${window.location.origin}/register.html?ref=${uid}`;
                 document.getElementById('referralLinkInput').value = refLink;
 
-                // ফায়ারস্টোর থেকে ইউজারের রেফারেল ডাটা ফেচ করা
+                // ফায়ারস্টোর থেকে মূল ইউজারের ডাটা ফেচ করা
                 onSnapshot(doc(db, "users", uid), (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
@@ -280,6 +303,39 @@
                         document.getElementById('referralEarningsDisplay').innerText = `৳ ${refEarnings.toFixed(2)}`;
                     }
                 });
+
+                // ফায়ারস্টোর থেকে রেফারেল হিস্ট্রি ফেচ করা (ধরে নেওয়া হচ্ছে ইউজারের সাব-কালেকশন বা ফিল্ড হিসেবে 'referrals' আছে)
+                const historyTableBody = document.getElementById('referralHistoryTableBody');
+                
+                // সাব-কালেকশন থেকে রিয়েল-টাইম ডেটা লোড করার কোড (users/{uid}/referrals)
+                onSnapshot(collection(db, "users", uid, "referrals"), (querySnapshot) => {
+                    if (querySnapshot.empty) {
+                        historyTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #94a3b8;">এখনো কেউ আপনার লিংকে যুক্ত হয়নি।</td></tr>`;
+                        return;
+                    }
+
+                    let rowsHtml = "";
+                    querySnapshot.forEach((doc) => {
+                        const refData = doc.data();
+                        const name = refData.name || refData.email || "অজানা ব্যবহারকারী";
+                        const plan = refData.planName || refData.plan || "Free Plan";
+                        const planPrice = refData.planPrice || refData.amount || 0;
+                        const commission = refData.commission || 0;
+                        const date = refData.date || refData.joinedAt || "প্রযোজ্য নয়";
+
+                        rowsHtml += `
+                            <tr>
+                                <td><strong style="color: #ffffff;">${name}</strong></td>
+                                <td><span style="color: #5eead4;">${plan}</span></td>
+                                <td>৳ ${planPrice}</td>
+                                <td><strong style="color: #10b981;">৳ ${commission}</strong></td>
+                                <td style="color: #94a3b8;">${date}</td>
+                            </tr>
+                        `;
+                    });
+                    historyTableBody.innerHTML = rowsHtml;
+                });
+
             } else {
                 window.location.href = "login.html";
             }
