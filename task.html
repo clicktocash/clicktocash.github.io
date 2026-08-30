@@ -180,25 +180,11 @@
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
         }
 
-        .ad-container {
-            width: 100%;
-            min-height: 150px;
-            background: #0f172a;
-            border: 1px dashed #334155;
-            border-radius: 8px;
-            margin: 15px 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 15px;
-        }
-
         .timer-display {
             font-size: 1.5rem;
             font-weight: 800;
             color: #5eead4;
-            margin: 10px 0;
+            margin: 15px 0;
         }
 
         .success-msg {
@@ -254,7 +240,7 @@
         <div class="task-card">
             <div class="task-info">
                 <h3>অ্যাডভারটাইজমেন্ট ভিজিট টাস্ক</h3>
-                <p>বিজ্ঞাপনটি সম্পূর্ণ ১৫ সেকেন্ড দেখে রিওয়ার্ড সংগ্রহ করুন।</p>
+                <p>টাস্ক শুরু করলে বিজ্ঞাপন পেজ ওপেন হবে এবং ১৫ সেকেন্ড কাউন্টডাউন শুরু হবে।</p>
                 <div class="task-reward" id="taskRewardLabel">রিওয়ার্ড: ৳ 0</div>
             </div>
             <button class="btn-task" id="startTaskBtn" onclick="openTaskModal()">টাস্ক শুরু করুন</button>
@@ -266,15 +252,9 @@
     <div class="modal-overlay" id="taskModal">
         <div class="modal-box">
             <h3 id="modalTitle">বিজ্ঞাপন ভিজিট করুন</h3>
-            <p id="modalDesc" style="color: #94a3b8; font-size: 0.85rem; margin-top: 5px;">নিচের টাইমার শেষ হওয়া পর্যন্ত অপেক্ষা করুন</p>
+            <p id="modalDesc" style="color: #94a3b8; font-size: 0.85rem; margin-top: 5px;">বিজ্ঞাপন পেজে ১৫ সেকেন্ড অপেক্ষা করুন...</p>
             
-            <div class="ad-container" id="adPlaceholder">
-                <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 10px;">বিজ্ঞাপন দেখতে নিচের লিংকে ক্লিক করুন:</p>
-                <!-- আপনার Adsterra Direct Link এখানে বসিয়ে দিন -->
-                <a href="https://www.profitableratecpmnetwork.com/rc82qccn9?key=06ab5cea4173c0c1b5297a14c066c956" target="_blank" class="btn-task" style="font-size: 0.85rem; padding: 8px 15px;" onclick="openDirectLinkAd()">অ্যাড ভিজিট করুন (Direct Link)</a>
-            </div>
-
-            <div class="timer-display" id="timerCount">15</div>
+            <div class="timer-display" id="timerCount">সময় বাকি: 15 সেকেন্ড</div>
             <button class="btn-task" id="claimBtn" style="width: 100%; display: none;" onclick="claimReward()">রিওয়ার্ড ক্লেইম করুন</button>
             <div class="success-msg" id="successText">টাস্ক সফলভাবে সম্পন্ন হয়েছে!</div>
         </div>
@@ -306,7 +286,6 @@
         let userData = {};
         let userPlan = "Free";
         
-        // প্ল্যান অনুযায়ী টাস্ক লিমিট এবং প্রতি টাস্কে আয়ের পরিমাণ
         const planConfig = {
             "free": { limit: 0, reward: 0 },
             "basic": { limit: 10, reward: 3 },
@@ -318,6 +297,7 @@
         let currentReward = 0;
         let todayCompleted = 0;
         let countdownTimer = null;
+        const adUrl = "https://www.profitableratecpmnetwork.com/rc82qccn9?key=06ab5cea4173c0c1b5297a14c066c956";
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
@@ -353,7 +333,6 @@
             }
         });
 
-        // রাত ১২টার পরে বা নতুন দিনে স্বয়ংক্রিয়ভাবে কাউন্ট 0 করার ফাংশন
         async function checkAndResetDailyTasks(userId, data) {
             const todayStr = new Date().toDateString();
             
@@ -394,6 +373,9 @@
                 return;
             }
 
+            // ওপেন করুন অ্যাডস্টাররা লিঙ্ক নতুন ট্যাবে
+            window.open(adUrl, '_blank');
+
             const modal = document.getElementById('taskModal');
             const timerDisplay = document.getElementById('timerCount');
             const claimBtn = document.getElementById('claimBtn');
@@ -401,7 +383,7 @@
             const modalTitle = document.getElementById('modalTitle');
 
             modal.classList.add('active');
-            modalTitle.innerText = "বিজ্ঞাপন ভিজিট করুন";
+            modalTitle.innerText = "বিজ্ঞাপন ভিজিট চলছে...";
             timerDisplay.style.display = "block";
             claimBtn.style.display = "none";
             successText.style.display = "none";
@@ -422,10 +404,6 @@
                     claimBtn.style.display = "block";
                 }
             }, 1000);
-        };
-
-        window.openDirectLinkAd = function() {
-            console.log("Direct Link Clicked");
         };
 
         window.claimReward = async function() {
@@ -451,7 +429,7 @@
 
                 setTimeout(() => {
                     document.getElementById('taskModal').classList.remove('active');
-                }, 1000);
+                }, 1500);
 
             } catch (error) {
                 alert("ত্রুটি: " + error.message);
