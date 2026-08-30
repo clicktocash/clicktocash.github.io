@@ -283,7 +283,8 @@
                         const data = docSnap.data();
                         usernameInput.value = data.username || "";
                         emailInput.value = data.email || user.email;
-                        phoneInput.value = data.phone || "";
+                        // সঠিকভাবে ফায়ারস্টোরের 'phone' ফিল্ড বা ব্যাকআপ হিসেবে data.phoneNumber ব্যবহার করা হচ্ছে যাতে জিমেইল না আসে
+                        phoneInput.value = data.phone || data.phoneNumber || "";
                         
                         // ইউজারের নিজস্ব ইউজারনেম দিয়ে রেফারাল লিংক তৈরি
                         const username = data.username || "user";
@@ -316,7 +317,7 @@
         // পাসওয়ার্ড পরিবর্তন
         passwordForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!currentUser) return;
+            if (!currentUser)عطورات return;
 
             const currentPassword = currentPasswordInput.value;
             const newPassword = newPasswordInput.value;
