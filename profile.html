@@ -277,13 +277,19 @@
             if (user) {
                 currentUser = user;
                 
+                // প্রথমে অথ থেকে পাওয়া ইমেইল সরাসরি সেট করে দেওয়া যাতে খালি না থাকে
+                emailInput.value = user.email || "";
+
                 // রিয়েল-টাইমে ফায়ারস্টোর থেকে ডাটা নিয়ে আসা
                 onSnapshot(doc(db, "users", user.uid), (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
                         usernameInput.value = data.username || "";
-                        emailInput.value = data.email || user.email;
-                        // সঠিকভাবে ফায়ারস্টোরের 'phone' ফিল্ড বা ব্যাকআপ হিসেবে data.phoneNumber ব্যবহার করা হচ্ছে যাতে জিমেইল না আসে
+                        
+                        // ফায়ারস্টোর বা অথ যেকোনো এক জায়গা থেকে সঠিক ইমেইল নিশ্চিত করা
+                        emailInput.value = data.email || user.email || "";
+                        
+                        // ফায়ারস্টোরে সেভ করা সঠিক ফোন নম্বর বা ফোন ফিল্ডটি এখানে শো করানো
                         phoneInput.value = data.phone || data.phoneNumber || "";
                         
                         // ইউজারের নিজস্ব ইউজারনেম দিয়ে রেফারাল লিংক তৈরি
@@ -297,7 +303,7 @@
             }
         });
 
-        // প্রোফাইল আপডেট
+        // প্রোফাইল আপডেট (ফোন নম্বর ও ইউজারনেম ফায়ারস্টোরে আপডেট হবে)
         profileForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!currentUser) return;
@@ -317,7 +323,7 @@
         // পাসওয়ার্ড পরিবর্তন
         passwordForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!currentUser)عطورات return;
+            if (!currentUser) return;
 
             const currentPassword = currentPasswordInput.value;
             const newPassword = newPasswordInput.value;
