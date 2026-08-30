@@ -87,7 +87,7 @@
             font-weight: 700;
         }
 
-        /* Link Box Section */
+        /* Link Box & Table Cards */
         .link-box-card {
             background: #1e293b;
             border: 1px solid #334155;
@@ -137,6 +137,31 @@
             background: #2dd4bf;
         }
 
+        /* Commission Table Styling */
+        .commission-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.95rem;
+            white-space: nowrap;
+        }
+
+        .commission-table th, .commission-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #334155;
+        }
+
+        .commission-table th {
+            color: #94a3b8;
+            font-weight: 600;
+            background: #0f172a;
+            border-radius: 6px;
+        }
+
+        .commission-table td {
+            color: #cbd5e1;
+        }
+
         /* Back Button */
         .back-link {
             display: inline-block;
@@ -171,7 +196,7 @@
 
         <div class="refer-hero">
             <h2>বন্ধুদের রেফার করুন এবং <span>বিনা পরিশ্রমে আয় করুন</span></h2>
-            <p>আপনার ইউনিক রেফারেল লিংকটি বন্ধু ও সামাজিক যোগাযোগ মাধ্যমে শেয়ার করুন। কেউ আপনার লিংক থেকে একাউন্ট খুললে আকর্ষণীয় বোনাস সরাসরি আপনার মূল ব্যালেন্সে যোগ হবে!</p>
+            <p>আপনার ইউনিক রেফারেল লিংকটি শেয়ার করুন। কেউ আপনার লিংক দিয়ে অ্যাকাউন্ট খুলে প্ল্যান কিনলে নির্ধারিত কমিশন সরাসরি আপনার মূল ব্যালেন্সে যোগ হবে!</p>
         </div>
 
         <div class="refer-stats">
@@ -185,11 +210,45 @@
             </div>
         </div>
 
+        <!-- Link Box Section -->
         <div class="link-box-card">
             <div class="link-title">🔗 আপনার নিজস্ব রেফারেল লিংক (Your Referral Link)</div>
             <div class="input-group">
                 <input type="text" id="referralLinkInput" value="লোড হচ্ছে..." readonly>
                 <button class="copy-btn" id="copyBtn" onclick="copyReferralLink()">লিংক কপি করুন</button>
+            </div>
+        </div>
+
+        <!-- Referral Commission Chart Section -->
+        <div class="link-box-card">
+            <div class="link-title">📊 রেফারেল কমিশন চার্ট (Referral Commission Rates)</div>
+            <div style="overflow-x: auto;">
+                <table class="commission-table">
+                    <thead>
+                        <tr>
+                            <th>মেম্বারশিপ প্ল্যান</th>
+                            <th>কমিশনের হার (%)</th>
+                            <th>বোনাসের পরিমাণ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong style="color: #ffffff;">Basic Plan</strong></td>
+                            <td><span style="color: #5eead4; font-weight: 600;">৫%</span></td>
+                            <td><strong style="color: #10b981;">৳ ৪৫</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong style="color: #ffffff;">Premium Plan</strong></td>
+                            <td><span style="color: #5eead4; font-weight: 600;">১৫%</span></td>
+                            <td><strong style="color: #10b981;">৳ ২৭০</strong></td>
+                        </tr>
+                        <tr>
+                            <td><strong style="color: #ffffff;">Pro Plan</strong></td>
+                            <td><span style="color: #5eead4; font-weight: 600;">৭৫%</span></td>
+                            <td><strong style="color: #10b981;">৳ ৬৭৫</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </main>
@@ -221,7 +280,7 @@
             if (user) {
                 const uid = user.uid;
                 
-                // ইউজারের নিজস্ব রেফারেল লিংক তৈরি (যেমন: register.html?ref=UID)
+                // ইউজারের নিজস্ব রেফারেল লিংক তৈরি (register.html?ref=UID)
                 const refLink = `${window.location.origin}/register.html?ref=${uid}`;
                 document.getElementById('referralLinkInput').value = refLink;
 
