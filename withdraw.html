@@ -178,49 +178,6 @@
         .badge-approved { color: #10b981; font-weight: 700; background: rgba(16, 185, 129, 0.1); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.2); }
         .badge-rejected { color: #ef4444; font-weight: 700; background: rgba(239, 68, 68, 0.1); padding: 4px 10px; border-radius: 20px; border: 1px solid rgba(239, 68, 68, 0.2); }
 
-        /* Success UI Screen */
-        .success-screen {
-            text-align: center;
-            padding: 20px 10px;
-        }
-
-        .success-icon {
-            font-size: 3.5rem;
-            color: #5eead4;
-            margin-bottom: 15px;
-        }
-
-        .success-screen h3 {
-            font-size: 1.4rem;
-            color: #ffffff;
-            margin-bottom: 12px;
-            font-weight: 700;
-        }
-
-        .success-screen p {
-            color: #94a3b8;
-            font-size: 1rem;
-            line-height: 1.6;
-            margin-bottom: 25px;
-        }
-
-        .btn-home {
-            display: inline-block;
-            background: #5eead4;
-            color: #0f172a;
-            padding: 12px 30px;
-            font-weight: 700;
-            font-size: 1rem;
-            border-radius: 8px;
-            text-decoration: none;
-            transition: background 0.3s, transform 0.2s;
-        }
-
-        .btn-home:hover {
-            background: #38bdf8;
-            transform: translateY(-2px);
-        }
-
         footer {
             background: #020617;
             color: #64748b;
@@ -310,7 +267,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, updateDoc, collection, addDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, onSnapshot, updateDoc, collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyByuYaP1fcGz0PJJ3r3QPWt0PNRSR9EUO0",
@@ -330,8 +287,11 @@
         let currentBalance = 0;
         let userPlan = "Basic";
         let minWithdrawLimit = 1000;
+        let requiredReferrals = 3;
+        let userReferralCount = 0;
+        let userUsername = "";
 
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUserId = user.uid;
                 currentUserEmail = user.email;
@@ -339,18 +299,35 @@
                 // Load user withdraw history in real-time
                 loadUserWithdrawHistory(user.uid);
 
-                onSnapshot(doc(db, "users", currentUserId), (docSnap) => {
+                onSnapshot(doc(db, "users", currentUserId), async (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
                         currentBalance = data.balance || 0;
                         userPlan = data.plan || "Basic"; 
+                        userUsername = data.username || "";
 
+                        // প্ল্যান অনুযায়ী সর্বনিম্ন উইথড্র এবং রেফার সংখ্যা নির্ধারণ
                         if (userPlan === 'Pro') {
                             minWithdrawLimit = 3000;
+                            requiredReferrals = 9;
                         } else if (userPlan === 'Premium') {
                             minWithdrawLimit = 2000;
+                            requiredReferrals = 6;
                         } else {
                             minWithdrawLimit = 1000; 
+                            requiredReferrals = 3;
+                        }
+
+                        // ফায়ারস্টোর থেকে ইউজারের রেফার সংখ্যা চেক করা (ধরে নিচ্ছি 'referredBy' ফিল্ডে ইউজারের ইউজারনেম সেভ থাকে)
+                        if (userUsername) {
+                            try {
+                                const refQuery = query(collection(db, "users"), where("referredBy", "==", userUsername));
+                                const refSnapshot = await getDocs(refQuery);
+                                userReferralCount = refSnapshot.size;
+                            } catch (err) {
+                                console.error("Referral count error:", err);
+                                userReferralCount = 0;
+                            }
                         }
 
                         const balanceEl = document.getElementById('userAvailableBalance');
@@ -366,7 +343,7 @@
 
                         const noticeBox = document.getElementById('noticeBoxText');
                         if(noticeBox) {
-                            noticeBox.innerHTML = `<strong>নিয়মাবলী (${userPlan} Plan):</strong> আপনার বর্তমান প্ল্যান অনুযায়ী সর্বনিম্ন উইথড্র <strong>${minWithdrawLimit} টাকা</strong>। রিকোয়েস্ট করার ২৪ ঘণ্টার মধ্যে পেমেন্ট কমপ্লিট করা হয়। ভুল নম্বর প্রদান করলে কর্তৃপক্ষ দায়ী থাকবে না।`;
+                            noticeBox.innerHTML = `<strong>নিয়মাবলী (${userPlan} Plan):</strong> আপনার বর্তমান প্ল্যান অনুযায়ী সর্বনিম্ন উইথড্র <strong>${minWithdrawLimit} টাকা</strong> এবং কমপক্ষে <strong>${requiredReferrals}টি রেফার</strong> বাধ্যতামূলক (আপনার বর্তমান রেফার: ${userReferralCount}টি)। রিকোয়েস্ট করার ২৪ ঘণ্টার মধ্যে পেমেন্ট কমপ্লিট করা হয়। ভুল নম্বর প্রদান করলে কর্তৃপক্ষ দায়ী থাকবে না।`;
                         }
                     }
                 });
@@ -424,6 +401,12 @@
 
         window.handleWithdraw = async function(event) {
             event.preventDefault();
+
+            // সাবমিট করার সময় লাইভ রেফার সংখ্যা চেক করে নেওয়া
+            if (userReferralCount < requiredReferrals) {
+                alert(`আপনার বর্তমান (${userPlan}) প্ল্যান অনুযায়ী উইথড্র করার জন্য কমপক্ষে ${requiredReferrals}টি রেফার প্রয়োজন। আপনার বর্তমান রেফার রয়েছে ${userReferralCount}টি।`);
+                return;
+            }
 
             const method = document.getElementById('withdrawMethod').value;
             const accType = document.getElementById('accountType').value;
