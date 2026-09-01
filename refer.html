@@ -305,11 +305,13 @@
 
                             querySnapshot.forEach((refDoc) => {
                                 const refData = refDoc.data();
+                                
+                                // যদি মেম্বারশিপ বা প্ল্যান ফিল্ড ফাকা থাকে, তবে সেটিকে "Free" ধরে নেওয়া হবে
                                 const plan = refData.membership || refData.plan || "Free";
                                 const planLower = plan.toLowerCase();
 
                                 // যদি প্ল্যানটি free না হয় (অর্থাৎ basic, premium বা pro হয়), কেবল তবেই কাউন্ট ও তালিকায় দেখাবে
-                                if (!planLower.includes("free")) {
+                                if (!planLower.includes("free") && planLower !== "none" && planLower !== "") {
                                     activeReferralCount++;
                                     
                                     const name = refData.username || refData.name || refData.email || "অজানা ব্যবহারকারী";
@@ -395,4 +397,4 @@
             });
     </script>
 </body>
-                                                                              </html>
+</html>
