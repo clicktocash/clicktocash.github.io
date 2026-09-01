@@ -296,34 +296,51 @@
                 currentUserId = user.uid;
                 currentUserEmail = user.email;
 
-                // Load user withdraw history in real-time
                 loadUserWithdrawHistory(user.uid);
 
                 onSnapshot(doc(db, "users", currentUserId), async (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
                         currentBalance = data.balance || 0;
-                        userPlan = data.plan || "Basic"; 
-                        userUsername = data.username || "";
+                        
+                        // ফায়ারবেসের plan বা membership ফিল্ড যেকোনো একটি থেকে ভ্যালু নিয়ে লোয়ারকেসে কনভার্ট করবে
+                        const rawPlan = data.plan || data.membership || "Basic";
+                        userPlan = rawPlan.charAt(0).toUpperCase() + rawPlan.slice(1).toLowerCase();
+                        userUsername = data.username || data.userName || "";
 
-                        // প্ল্যান অনুযায়ী সর্বনিম্ন উইথড্র এবং রেফার সংখ্যা নির্ধারণ
-                        if (userPlan === 'Pro') {
+                        // প্ল্যান অনুযায়ী সর্বনিম্ন উইথড্র এবং রেফার সংখ্যা নির্ধারণ (লোয়ারকেস চেক সহ)
+                        const planLower = userPlan.toLowerCase();
+                        if (planLower.includes("pro")) {
                             minWithdrawLimit = 3000;
                             requiredReferrals = 9;
-                        } else if (userPlan === 'Premium') {
+                            userPlan = "Pro";
+                        } else if (planLower.includes("premium")) {
                             minWithdrawLimit = 2000;
                             requiredReferrals = 6;
+                            userPlan = "Premium";
                         } else {
                             minWithdrawLimit = 1000; 
                             requiredReferrals = 3;
+                            userPlan = "Basic";
                         }
 
-                        // ফায়ারস্টোর থেকে ইউজারের রেফার সংখ্যা চেক করা (ধরে নিচ্ছি 'referredBy' ফিল্ডে ইউজারের ইউজারনেম সেভ থাকে)
+                        // ফায়ারস্টোর থেকে ইউজারের রেফার সংখ্যা চেক করা
                         if (userUsername) {
                             try {
                                 const refQuery = query(collection(db, "users"), where("referredBy", "==", userUsername));
                                 const refSnapshot = await getDocs(refQuery);
-                                userReferralCount = refSnapshot.size;
+                                
+                                userReferralCount = 0;
+                                refSnapshot.forEach((refDoc) => {
+                                    const refData = refDoc.data();
+                                    const refMemberPlan = refData.membership || refData.plan || "Free";
+                                    const refPlanLower = refMemberPlan.toLowerCase();
+                                    
+                                    // শুধুমাত্র ফ্রি ছাড়া পেইড রেফারগুলোই কাউন্ট হবে
+                                    if (!refPlanLower.includes("free") && refPlanLower !== "none" && refPlanLower !== "") {
+                                        userReferralCount++;
+                                    }
+                                });
                             } catch (err) {
                                 console.error("Referral count error:", err);
                                 userReferralCount = 0;
@@ -343,7 +360,7 @@
 
                         const noticeBox = document.getElementById('noticeBoxText');
                         if(noticeBox) {
-                            noticeBox.innerHTML = `<strong>নিয়মাবলী (${userPlan} Plan):</strong> আপনার বর্তমান প্ল্যান অনুযায়ী সর্বনিম্ন উইথড্র <strong>${minWithdrawLimit} টাকা</strong> এবং কমপক্ষে <strong>${requiredReferrals}টি রেফার</strong> বাধ্যতামূলক (আপনার বর্তমান রেফার: ${userReferralCount}টি)। রিকোয়েস্ট করার ২৪ ঘণ্টার মধ্যে পেমেন্ট কমপ্লিট করা হয়। ভুল নম্বর প্রদান করলে কর্তৃপক্ষ দায়ী থাকবে না।`;
+                            noticeBox.innerHTML = `<strong>নিয়মাবলী (${userPlan} Plan):</strong> আপনার বর্তমান প্ল্যান অনুযায়ী সর্বনিম্ন উইথড্র <strong>${minWithdrawLimit} টাকা</strong> এবং কমপক্ষে <strong>সহকর্মী/বন্ধুদের মধ্য থেকে ${requiredReferrals}টি সক্রিয় পেইড রেফার</strong> বাধ্যতামূলক (আপনার বর্তমান সক্রিয় রেফার: ${userReferralCount}টি)। রিকোয়েস্ট করার ২৪ ঘণ্টার মধ্যে পেমেন্ট কমপ্লিট করা হয়।`;
                         }
                     }
                 });
@@ -352,7 +369,6 @@
             }
         });
 
-        // Load current user's withdraw history in real-time
         function loadUserWithdrawHistory(uid) {
             const historyBody = document.getElementById('userWithdrawHistoryBody');
             const q = query(collection(db, "withdraws"), where("uid", "==", uid));
@@ -369,7 +385,6 @@
                     withdraws.push({ id: docSnap.id, ...docSnap.data() });
                 });
 
-                // নতুন রিকোয়েস্টগুলো উপরে দেখানোর জন্য সর্টিং
                 withdraws.sort((a, b) => {
                     if (!a.timestamp || !b.timestamp) return 0;
                     return b.timestamp.toMillis() - a.timestamp.toMillis();
@@ -404,7 +419,7 @@
 
             // সাবমিট করার সময় লাইভ রেফার সংখ্যা চেক করে নেওয়া
             if (userReferralCount < requiredReferrals) {
-                alert(`আপনার বর্তমান (${userPlan}) প্ল্যান অনুযায়ী উইথড্র করার জন্য কমপক্ষে ${requiredReferrals}টি রেফার প্রয়োজন। আপনার বর্তমান রেফার রয়েছে ${userReferralCount}টি।`);
+                alert(`আপনার বর্তমান (${userPlan}) প্ল্যান অনুযায়ী উইথড্র করার জন্য কমপক্ষে ${requiredReferrals}টি সক্রিয় পেইড রেফার প্রয়োজন। আপনার বর্তমান সক্রিয় রেফার রয়েছে ${userReferralCount}টি।`);
                 return;
             }
 
