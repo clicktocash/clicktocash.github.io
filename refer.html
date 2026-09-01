@@ -185,7 +185,7 @@
 
         <div class="refer-stats">
             <div class="stat-card">
-                <div class="stat-title">মোট রেফারেল (Total Referrals)</div>
+                <div class="stat-title">সক্রিয় রেফারেল (Active Referrals)</div>
                 <div class="stat-value" id="totalReferCount">0 জন</div>
             </div>
             <div class="stat-card">
@@ -249,7 +249,7 @@
                     </thead>
                     <tbody id="referralHistoryTableBody">
                         <tr>
-                            <td colspan="5" style="text-align: center; color: #94a3b8;">কোনো রেফারেল পাওয়া যায়নি।</td>
+                            <td colspan="5" style="text-align: center; color: #94a3b8;">কোনো সক্রিয় রেফারেল পাওয়া যায়নি।</td>
                         </tr>
                     </tbody>
                 </table>
@@ -283,70 +283,71 @@
             if (user) {
                 const uid = user.uid;
 
-                // ১. প্রথমে লগইন করা ইউজারের নিজের ডকুমেন্ট এনে ইউজারনেম ও আর্নিং বের করা
                 onSnapshot(doc(db, "users", uid), (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
                         const username = data.username || data.userName || uid;
                         
-                        // রেফারেল লিংক তৈরি
                         const refLink = `https://clicktocash.github.io/signup.html?ref=${username}`;
                         document.getElementById('referralLinkInput').value = refLink;
                         
-                        // ব্যালেন্স বা বোনাস প্রদর্শন
                         const refEarnings = data.referralBonus || data.referralEarnings || 0;
                         document.getElementById('referralEarningsDisplay').innerText = `৳ ${refEarnings.toFixed(2)}`;
 
-                        // ২. এখন 'users' কালেকশন থেকে কুয়েরি করব যাদের referredBy == username
                         const usersRef = collection(db, "users");
                         const q = query(usersRef, where("referredBy", "==", username));
 
                         onSnapshot(q, (querySnapshot) => {
                             const historyTableBody = document.getElementById('referralHistoryTableBody');
                             
-                            // মোট রেফারেল সংখ্যা আপডেট
-                            document.getElementById('totalReferCount').innerText = `${querySnapshot.size} জন`;
-
-                            if (querySnapshot.empty) {
-                                historyTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #94a3b8;">এখনো কেউ আপনার লিংকে যুক্ত হয়নি।</td></tr>`;
-                                return;
-                            }
-
                             let rowsHtml = "";
+                            let activeReferralCount = 0;
+
                             querySnapshot.forEach((refDoc) => {
                                 const refData = refDoc.data();
-                                const name = refData.username || refData.name || refData.email || "অজানা ব্যবহারকারী";
-                                
-                                // ইউজারের কেনা প্ল্যান চেক (Free হলে Free Plan দেখাবে)
-                                const plan = refData.membership || refData.plan || "Free Plan";
-                                
-                                // প্ল্যান অনুযায়ী মূল্য ও কমিশন নির্ধারণ
-                                let planPrice = 0;
-                                let commission = 0;
-                                if (plan.toLowerCase().includes("basic")) {
-                                    planPrice = 900; // আনুমানিক বা আপনার নির্ধারিত মূল্য
-                                    commission = 45;
-                                } else if (plan.toLowerCase().includes("premium")) {
-                                    planPrice = 1800;
-                                    commission = 270;
-                                } else if (plan.toLowerCase().includes("pro")) {
-                                    planPrice = 2700; // আপনার চার্ট অনুযায়ী Pro Plan এর কমিশন ৬৭৫ টাকা ধরলে
-                                    commission = 675;
+                                const plan = refData.membership || refData.plan || "Free";
+                                const planLower = plan.toLowerCase();
+
+                                // যদি প্ল্যানটি free না হয় (অর্থাৎ basic, premium বা pro হয়), কেবল তবেই কাউন্ট ও তালিকায় দেখাবে
+                                if (!planLower.includes("free")) {
+                                    activeReferralCount++;
+                                    
+                                    const name = refData.username || refData.name || refData.email || "অজানা ব্যবহারকারী";
+                                    
+                                    let planPrice = 0;
+                                    let commission = 0;
+                                    if (planLower.includes("basic")) {
+                                        planPrice = 900;
+                                        commission = 45;
+                                    } else if (planLower.includes("premium")) {
+                                        planPrice = 1800;
+                                        commission = 270;
+                                    } else if (planLower.includes("pro")) {
+                                        planPrice = 2700;
+                                        commission = 675;
+                                    }
+
+                                    const date = refData.createdAt || refData.joinedAt || "প্রযোজ্য নয়";
+
+                                    rowsHtml += `
+                                        <tr>
+                                            <td><strong style="color: #ffffff;">${name}</strong></td>
+                                            <td><span style="color: #5eead4;">${plan}</span></td>
+                                            <td>৳ ${planPrice}</td>
+                                            <td><strong style="color: #10b981;">৳ ${commission}</strong></td>
+                                            <td style="color: #94a3b8;">${date}</td>
+                                        </tr>
+                                    `;
                                 }
-
-                                const date = refData.createdAt || refData.joinedAt || "প্রযোজ্য নয়";
-
-                                rowsHtml += `
-                                    <tr>
-                                        <td><strong style="color: #ffffff;">${name}</strong></td>
-                                        <td><span style="color: #5eead4;">${plan}</span></td>
-                                        <td>৳ ${planPrice}</td>
-                                        <td><strong style="color: #10b981;">৳ ${commission}</strong></td>
-                                        <td style="color: #94a3b8;">${date}</td>
-                                    </tr>
-                                `;
                             });
-                            historyTableBody.innerHTML = rowsHtml;
+
+                            document.getElementById('totalReferCount').innerText = `${activeReferralCount} জন`;
+
+                            if (activeReferralCount === 0) {
+                                historyTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #94a3b8;">এখনো কোনো পেইড রেফারেল নেই। বন্ধুরা প্ল্যান কিনলে এখানে শো করবে।</td></tr>`;
+                            } else {
+                                historyTableBody.innerHTML = rowsHtml;
+                            }
                         });
                     }
                 });
@@ -361,7 +362,7 @@
         function copyReferralLink() {
             const linkInput = document.getElementById('referralLinkInput');
             linkInput.select();
-            linkInput.setSelectionRange(0, 99999); // মোবাইল ডিভাইসের জন্য
+            linkInput.setSelectionRange(0, 99999);
             
             navigator.clipboard.writeText(linkInput.value).then(() => {
                 const btn = document.getElementById('copyBtn');
@@ -394,4 +395,4 @@
             });
     </script>
 </body>
-</html>
+                                                                              </html>
